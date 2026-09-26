@@ -15,7 +15,7 @@ function requireRole(role: string, allowed: string[]) { if (!allowed.includes(ro
 
 export const getWorkspace = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const role = await roleFor(context);
-  const [profile, profiles, roles, trainings, resources, allocations, alerts, feedback, activity, participants, activities] = await Promise.all([
+  const [profile, profiles, roles, trainings, resources, allocations, alerts, feedback, activity, participants, activities, disasters, teams, teamMembers, shelters, evacuations, warehouses, attendance, acknowledgements, notifications, hospitals, hospitalResponses, contacts] = await Promise.all([
     context.supabase.from("profiles").select("*").eq("id", context.userId).single(),
     context.supabase.from("profiles").select("*").order("full_name"),
     context.supabase.from("user_roles").select("user_id, role"),
@@ -27,12 +27,24 @@ export const getWorkspace = createServerFn({ method: "GET" }).middleware([requir
     context.supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(20),
     context.supabase.from("training_participants").select("*"),
     context.supabase.from("training_activities").select("*").order("sort_order"),
+    context.supabase.from("disasters").select("*").order("occurred_at", { ascending: false }),
+    context.supabase.from("response_teams").select("*").order("team_name"),
+    context.supabase.from("response_team_members").select("*"),
+    context.supabase.from("shelters").select("*").order("shelter_name"),
+    context.supabase.from("evacuations").select("*").order("created_at", { ascending: false }),
+    context.supabase.from("warehouses").select("*").order("warehouse_name"),
+    context.supabase.from("attendance_records").select("*").order("attendance_date", { ascending: false }),
+    context.supabase.from("alert_acknowledgements").select("*").order("acknowledged_at", { ascending: false }),
+    context.supabase.from("notifications").select("*").order("created_at", { ascending: false }),
+    context.supabase.from("medical_facilities").select("*").order("hospital_name"),
+    context.supabase.from("hospital_disaster_responses").select("*"),
+    context.supabase.from("emergency_contacts").select("*").order("service"),
   ]);
-  const failed = [profile, profiles, roles, trainings, resources, allocations, alerts, feedback, activity, participants, activities].find((r) => r.error);
+  const failed = [profile, profiles, roles, trainings, resources, allocations, alerts, feedback, activity, participants, activities, disasters, teams, teamMembers, shelters, evacuations, warehouses, attendance, acknowledgements, notifications, hospitals, hospitalResponses, contacts].find((r) => r.error);
   if (failed?.error) throw failed.error;
   const profileData = profile.data;
   if (!profileData) throw new Error("Account profile is not configured.");
-  return { userId: context.userId, role, profile: profileData, profiles: profiles.data ?? [], roles: roles.data ?? [], trainings: trainings.data ?? [], resources: resources.data ?? [], allocations: allocations.data ?? [], alerts: alerts.data ?? [], feedback: feedback.data ?? [], activity: activity.data ?? [], participants: participants.data ?? [], activities: activities.data ?? [] };
+  return { userId: context.userId, role, profile: profileData, profiles: profiles.data ?? [], roles: roles.data ?? [], trainings: trainings.data ?? [], resources: resources.data ?? [], allocations: allocations.data ?? [], alerts: alerts.data ?? [], feedback: feedback.data ?? [], activity: activity.data ?? [], participants: participants.data ?? [], activities: activities.data ?? [], disasters: disasters.data ?? [], teams: teams.data ?? [], teamMembers: teamMembers.data ?? [], shelters: shelters.data ?? [], evacuations: evacuations.data ?? [], warehouses: warehouses.data ?? [], attendance: attendance.data ?? [], acknowledgements: acknowledgements.data ?? [], notifications: notifications.data ?? [], hospitals: hospitals.data ?? [], hospitalResponses: hospitalResponses.data ?? [], contacts: contacts.data ?? [] };
 });
 
 export const createTraining = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ name:z.string().min(3), disasterType:z.string().min(2), location:z.string().min(2), scheduledAt:z.string().min(1), trainerId:z.string().uuid().nullable(), participants:z.number().int().min(0), status:statusSchema, description:z.string() }).parse(input)).handler(async ({ data, context }) => {
@@ -58,9 +70,9 @@ export const deleteTraining = createServerFn({ method: "POST" }).middleware([req
   return { ok:true };
 });
 
-export const createResource = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ name:z.string().min(2), category:z.string().min(2), quantity:z.number().int().min(0), minimumStock:z.number().int().min(0) }).parse(input)).handler(async ({ data, context }) => {
+export const createResource = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ name:z.string().min(2), category:z.string().min(2), quantity:z.number().int().min(0), minimumStock:z.number().int().min(0), damagedQuantity:z.number().int().min(0).default(0), unit:z.string().min(1).default("units"), storageLocation:z.string().default(""), condition:z.string().default("Good"), expiryDate:z.string().nullable().default(null), supplier:z.string().default(""), warehouseId:z.string().uuid().nullable().default(null) }).parse(input)).handler(async ({ data, context }) => {
   requireRole(await roleFor(context), ["admin","trainer"]);
-  const result = await context.supabase.from("resources").insert({ name:data.name, category:data.category, total_quantity:data.quantity, available_quantity:data.quantity, allocated_quantity:0, minimum_stock:data.minimumStock }).select().single();
+  const result = await context.supabase.from("resources").insert({ name:data.name, category:data.category, total_quantity:data.quantity, available_quantity:data.quantity, allocated_quantity:0, minimum_stock:data.minimumStock, damaged_quantity:data.damagedQuantity, unit:data.unit, storage_location:data.storageLocation, condition:data.condition, expiry_date:data.expiryDate, supplier:data.supplier, warehouse_id:data.warehouseId }).select().single();
   if (result.error) throw result.error;
   return result.data;
 });
@@ -72,9 +84,9 @@ export const allocateResource = createServerFn({ method: "POST" }).middleware([r
   return result.data;
 });
 
-export const createAlert = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ title:z.string().min(3), message:z.string().min(3), severity:severitySchema, trainingId:z.string().uuid().nullable(), recipients:z.enum(["all","admin","trainer","volunteer"]) }).parse(input)).handler(async ({ data, context }) => {
+export const createAlert = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ title:z.string().min(3), message:z.string().min(3), severity:severitySchema, trainingId:z.string().uuid().nullable(), recipients:z.enum(["all","admin","trainer","volunteer"]), alertType:z.enum(["Disaster Warning","Resource Shortage","Evacuation","Medical Emergency","Weather","Training","Infrastructure","Security","Other"]).default("Other"), disasterId:z.string().uuid().nullable().default(null), location:z.string().default(""), targetTeams:z.array(z.string().uuid()).default([]), expiresAt:z.string().nullable().default(null) }).parse(input)).handler(async ({ data, context }) => {
   requireRole(await roleFor(context), ["admin","trainer"]);
-  const result = await context.supabase.from("alerts").insert({ title:data.title, message:data.message, severity:data.severity, training_id:data.trainingId, recipients:data.recipients, created_by:context.userId }).select().single();
+  const result = await context.supabase.from("alerts").insert({ title:data.title, message:data.message, severity:data.severity, training_id:data.trainingId, recipients:data.recipients, created_by:context.userId, alert_type:data.alertType, disaster_id:data.disasterId, location:data.location, target_teams:data.targetTeams, expires_at:data.expiresAt }).select().single();
   if (result.error) throw result.error;
   await context.supabase.from("activity_log").insert({ actor_id:context.userId, event:"Emergency alert generated", entity_type:"alert", entity_id:result.data.id });
   return result.data;
