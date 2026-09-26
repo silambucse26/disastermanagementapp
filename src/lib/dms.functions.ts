@@ -84,9 +84,9 @@ export const allocateResource = createServerFn({ method: "POST" }).middleware([r
   return result.data;
 });
 
-export const createAlert = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ title:z.string().min(3), message:z.string().min(3), severity:severitySchema, trainingId:z.string().uuid().nullable(), recipients:z.enum(["all","admin","trainer","volunteer"]) }).parse(input)).handler(async ({ data, context }) => {
+export const createAlert = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ title:z.string().min(3), message:z.string().min(3), severity:severitySchema, trainingId:z.string().uuid().nullable(), recipients:z.enum(["all","admin","trainer","volunteer"]), alertType:z.enum(["Disaster Warning","Resource Shortage","Evacuation","Medical Emergency","Weather","Training","Infrastructure","Security","Other"]).default("Other"), disasterId:z.string().uuid().nullable().default(null), location:z.string().default(""), targetTeams:z.array(z.string().uuid()).default([]), expiresAt:z.string().nullable().default(null) }).parse(input)).handler(async ({ data, context }) => {
   requireRole(await roleFor(context), ["admin","trainer"]);
-  const result = await context.supabase.from("alerts").insert({ title:data.title, message:data.message, severity:data.severity, training_id:data.trainingId, recipients:data.recipients, created_by:context.userId }).select().single();
+  const result = await context.supabase.from("alerts").insert({ title:data.title, message:data.message, severity:data.severity, training_id:data.trainingId, recipients:data.recipients, created_by:context.userId, alert_type:data.alertType, disaster_id:data.disasterId, location:data.location, target_teams:data.targetTeams, expires_at:data.expiresAt }).select().single();
   if (result.error) throw result.error;
   await context.supabase.from("activity_log").insert({ actor_id:context.userId, event:"Emergency alert generated", entity_type:"alert", entity_id:result.data.id });
   return result.data;
