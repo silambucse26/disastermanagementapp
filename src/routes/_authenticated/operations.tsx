@@ -3,10 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Activity, AlertTriangle, Archive, BarChart3, Bell, BookOpenCheck, Boxes, CheckCircle2,
+  Activity, AlertTriangle, Archive, BarChart3, Bell, BookOpenCheck, Boxes, Building2, CheckCircle2,
   ChevronRight, ClipboardList, Download, Eye, FileText, GraduationCap, LayoutDashboard,
   LogOut, Menu, MoreHorizontal, PackageCheck, Plus, Radio, Search, Settings, Shield,
-  Star, Trash2, TrendingUp, UserPlus, Users, XCircle
+  Star, Trash2, TrendingUp, UserPlus, Users, XCircle, MapPinned, ShieldCheck, TentTree, Route as RouteIcon, Hospital, ContactRound, ClipboardCheck
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { allocateResource, createAlert, createResource, createTraining, createUser, deleteTraining, deleteUser, getWorkspace, resolveAlert, submitFeedback, updateTrainingProgress } from "@/lib/dms.functions";
 import { formatDate, formatTime, initials, ROLE_LABEL, type AlertRecord, type AppRole, type Resource, type Training } from "@/lib/dms";
+import { ResponseModule, type ResponseView } from "@/components/response-views";
+import { acknowledgeAlert } from "@/lib/response.functions";
 
 export const Route = createFileRoute("/_authenticated/operations")({
   head: () => ({ meta: [
@@ -38,42 +40,54 @@ export const Route = createFileRoute("/_authenticated/operations")({
   ]}), component: OperationsPage,
 });
 
-type View = "dashboard"|"users"|"trainings"|"resources"|"allocations"|"monitoring"|"alerts"|"feedback"|"reports"|"settings";
+type View = "dashboard"|"users"|"trainings"|"resources"|"allocations"|"monitoring"|"alerts"|"feedback"|"reports"|"settings"|ResponseView;
 type Workspace = Awaited<ReturnType<typeof getWorkspace>>;
 type IconType = typeof LayoutDashboard;
 
 const allNav: { id:View; label:string; icon:IconType; roles:AppRole[] }[] = [
   {id:"dashboard",label:"Dashboard",icon:LayoutDashboard,roles:["admin","trainer","volunteer"]},
+  {id:"disasters",label:"Disasters",icon:AlertTriangle,roles:["admin","trainer","volunteer"]},
+  {id:"incident-map",label:"Incident Map",icon:MapPinned,roles:["admin","trainer","volunteer"]},
+  {id:"teams",label:"Response Teams",icon:ShieldCheck,roles:["admin","trainer","volunteer"]},
+  {id:"shelters",label:"Shelters",icon:TentTree,roles:["admin","trainer","volunteer"]},
+  {id:"evacuations",label:"Evacuations",icon:RouteIcon,roles:["admin","trainer"]},
   {id:"users",label:"Users",icon:Users,roles:["admin"]},
   {id:"trainings",label:"Trainings",icon:GraduationCap,roles:["admin","trainer","volunteer"]},
   {id:"resources",label:"Resources",icon:Boxes,roles:["admin","trainer","volunteer"]},
   {id:"allocations",label:"Allocations",icon:PackageCheck,roles:["admin","trainer"]},
+  {id:"warehouses",label:"Warehouses",icon:Building2,roles:["admin","trainer"]},
+  {id:"participants",label:"Participants",icon:Users,roles:["admin","trainer"]},
+  {id:"attendance",label:"Attendance",icon:ClipboardList,roles:["admin","trainer"]},
   {id:"monitoring",label:"Live Monitoring",icon:Radio,roles:["admin","trainer"]},
   {id:"alerts",label:"Alerts",icon:AlertTriangle,roles:["admin","trainer","volunteer"]},
+  {id:"notifications",label:"Notifications",icon:Bell,roles:["admin","trainer","volunteer"]},
+  {id:"hospitals",label:"Medical Facilities",icon:Hospital,roles:["admin","trainer","volunteer"]},
+  {id:"contacts",label:"Emergency Contacts",icon:ContactRound,roles:["admin","trainer","volunteer"]},
   {id:"feedback",label:"Feedback",icon:Star,roles:["admin","trainer","volunteer"]},
   {id:"reports",label:"Reports",icon:BarChart3,roles:["admin"]},
   {id:"settings",label:"Settings",icon:Settings,roles:["admin"]},
+  {id:"audit",label:"Audit Logs",icon:ClipboardCheck,roles:["admin"]},
 ];
 
 function OperationsPage() {
   const queryClient = useQueryClient(); const navigate = useNavigate(); const [view,setView]=useState<View>("dashboard"); const [mobile,setMobile]=useState(false);
   const get = useServerFn(getWorkspace);
   const query = useQuery({ queryKey:["workspace"], queryFn:()=>get() });
-  useEffect(()=>{ const channel=supabase.channel("dms-live").on("postgres_changes",{event:"*",schema:"public",table:"alerts"},(payload)=>{ queryClient.invalidateQueries({queryKey:["workspace"]}); if(payload.eventType==="INSERT") toast.error("New operational alert received"); }).on("postgres_changes",{event:"*",schema:"public",table:"activity_log"},()=>queryClient.invalidateQueries({queryKey:["workspace"]})).on("postgres_changes",{event:"*",schema:"public",table:"trainings"},()=>queryClient.invalidateQueries({queryKey:["workspace"]})).subscribe(); return()=>{void supabase.removeChannel(channel)}; },[queryClient]);
+  useEffect(()=>{ const refresh=()=>queryClient.invalidateQueries({queryKey:["workspace"]});const channel=supabase.channel("dms-live").on("postgres_changes",{event:"*",schema:"public",table:"alerts"},(payload)=>{void refresh();if(payload.eventType==="INSERT")toast.error("New operational alert received")}).on("postgres_changes",{event:"*",schema:"public",table:"notifications"},(payload)=>{void refresh();if(payload.eventType==="INSERT")toast.info("New notification received")}).on("postgres_changes",{event:"*",schema:"public",table:"disasters"},refresh).on("postgres_changes",{event:"*",schema:"public",table:"response_teams"},refresh).on("postgres_changes",{event:"*",schema:"public",table:"shelters"},refresh).on("postgres_changes",{event:"*",schema:"public",table:"evacuations"},refresh).on("postgres_changes",{event:"*",schema:"public",table:"activity_log"},refresh).on("postgres_changes",{event:"*",schema:"public",table:"trainings"},refresh).subscribe(); return()=>{void supabase.removeChannel(channel)}; },[queryClient]);
   async function logout(){await queryClient.cancelQueries();queryClient.clear();await supabase.auth.signOut();await navigate({to:"/",replace:true});}
   if(query.isLoading) return <LoadingScreen/>;
   if(query.error||!query.data) return <ErrorScreen retry={()=>query.refetch()}/>;
   const data=query.data; const allowed=allNav.filter(n=>n.roles.includes(data.role));
   return <div className="min-h-screen bg-background text-foreground">
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-primary text-primary-foreground lg:flex"><Brand/><Navigation items={allowed} active={view} onSelect={setView}/><div className="mt-auto border-t border-primary-foreground/10 p-3"><button onClick={()=>void logout()} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-primary-foreground/75 hover:bg-primary-foreground/10"><LogOut className="size-4"/>Log out</button></div></aside>
-    <Sheet open={mobile} onOpenChange={setMobile}><SheetContent side="left" className="w-72 border-0 bg-primary p-0 text-primary-foreground"><SheetTitle className="sr-only">Navigation</SheetTitle><Brand/><Navigation items={allowed} active={view} onSelect={(v)=>{setView(v);setMobile(false)}}/><div className="p-3"><Button variant="ghost" className="w-full justify-start text-primary-foreground" onClick={()=>void logout()}><LogOut/>Log out</Button></div></SheetContent></Sheet>
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-primary text-primary-foreground lg:flex"><Brand/><div className="min-h-0 flex-1 overflow-y-auto"><Navigation items={allowed} active={view} onSelect={setView}/></div><div className="border-t border-primary-foreground/10 p-3"><Button variant="ghost" onClick={()=>void logout()} className="w-full justify-start text-primary-foreground/75 hover:bg-primary-foreground/10 hover:text-primary-foreground"><LogOut className="size-4"/>Log out</Button></div></aside>
+    <Sheet open={mobile} onOpenChange={setMobile}><SheetContent side="left" className="flex w-72 flex-col border-0 bg-primary p-0 text-primary-foreground"><SheetTitle className="sr-only">Navigation</SheetTitle><Brand/><div className="min-h-0 flex-1 overflow-y-auto"><Navigation items={allowed} active={view} onSelect={(v)=>{setView(v);setMobile(false)}}/></div><div className="p-3"><Button variant="ghost" className="w-full justify-start text-primary-foreground" onClick={()=>void logout()}><LogOut/>Log out</Button></div></SheetContent></Sheet>
     <div className="lg:pl-64"><Topbar data={data} onMenu={()=>setMobile(true)} onAlerts={()=>setView("alerts")}/><main className="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8"><WorkspaceView view={view} data={data} refresh={()=>queryClient.invalidateQueries({queryKey:["workspace"]})} setView={setView}/></main></div>
   </div>;
 }
 
 function Brand(){return <div className="flex h-20 items-center gap-3 border-b border-primary-foreground/10 px-5"><div className="grid size-10 place-items-center rounded-md bg-destructive"><AlertTriangle className="size-5"/></div><div><p className="font-display text-xl font-extrabold">DMS</p><p className="text-[11px] text-primary-foreground/60">Disaster Management</p></div></div>}
 function Navigation({items,active,onSelect}:{items:typeof allNav;active:View;onSelect:(v:View)=>void}){return <nav className="flex-1 space-y-1 p-3">{items.map(n=><button key={n.id} onClick={()=>onSelect(n.id)} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${active===n.id?"bg-primary-foreground text-primary":"text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"}`}><n.icon className="size-4"/>{n.label}{n.id==="monitoring"&&<span className="ml-auto size-1.5 rounded-full bg-emerald-400 live-pulse"/>}</button>)}</nav>}
-function Topbar({data,onMenu,onAlerts}:{data:Workspace;onMenu:()=>void;onAlerts:()=>void}){const active=data.alerts.filter(a=>a.status==="active").length;return <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-card/95 px-4 backdrop-blur sm:px-6"><Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu" onClick={onMenu}><Menu/></Button><div className="relative hidden max-w-md flex-1 md:block"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="bg-muted/60 pl-9" placeholder="Search operations…"/></div><div className="ml-auto flex items-center gap-3"><Button variant="ghost" size="icon" className="relative" aria-label="View alerts" onClick={onAlerts}><Bell/>{active>0&&<span className="absolute right-0 top-0 grid size-4 place-items-center rounded-full bg-destructive text-[9px] text-destructive-foreground">{active}</span>}</Button><div className="hidden text-right sm:block"><p className="text-sm font-semibold">{data.profile.full_name}</p><p className="text-xs text-muted-foreground">{ROLE_LABEL[data.role]}</p></div><Avatar className="size-9"><AvatarFallback className="bg-primary text-primary-foreground">{initials(data.profile.full_name)}</AvatarFallback></Avatar></div></header>}
+function Topbar({data,onMenu,onAlerts}:{data:Workspace;onMenu:()=>void;onAlerts:()=>void}){const active=data.alerts.filter(a=>a.status==="active").length+data.notifications.filter(n=>!n.read).length;return <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-card/95 px-4 backdrop-blur sm:px-6"><Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu" onClick={onMenu}><Menu/></Button><div className="relative hidden max-w-md flex-1 md:block"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="bg-muted/60 pl-9" placeholder="Search operations…"/></div><div className="ml-auto flex items-center gap-3"><Button variant="ghost" size="icon" className="relative" aria-label="View alerts" onClick={onAlerts}><Bell/>{active>0&&<span className="absolute right-0 top-0 grid size-4 place-items-center rounded-full bg-destructive text-[9px] text-destructive-foreground">{active}</span>}</Button><div className="hidden text-right sm:block"><p className="text-sm font-semibold">{data.profile.full_name}</p><p className="text-xs text-muted-foreground">{ROLE_LABEL[data.role]}</p></div><Avatar className="size-9"><AvatarFallback className="bg-primary text-primary-foreground">{initials(data.profile.full_name)}</AvatarFallback></Avatar></div></header>}
 
 function WorkspaceView({view,data,refresh,setView}:{view:View;data:Workspace;refresh:()=>Promise<unknown>;setView:(v:View)=>void}){
   if(view==="dashboard") return <Dashboard data={data} setView={setView}/>;
@@ -85,6 +99,7 @@ function WorkspaceView({view,data,refresh,setView}:{view:View;data:Workspace;ref
   if(view==="alerts") return <AlertsView data={data} refresh={refresh}/>;
   if(view==="feedback") return <FeedbackView data={data} refresh={refresh}/>;
   if(view==="reports") return <ReportsView data={data}/>;
+  if(view!=="settings") return <ResponseModule view={view as ResponseView} data={data} refresh={refresh}/>;
   return <SettingsView data={data}/>;
 }
 
@@ -94,8 +109,8 @@ function StatCard({label,value,icon:Icon,tone="blue",note}:{label:string;value:s
 function Status({value}:{value:string}){const c=value==="active"||value==="available"||value==="completed"?"bg-emerald-50 text-emerald-700 border-emerald-200":value==="high"||value==="cancelled"||value==="out of stock"?"bg-red-50 text-red-700 border-red-200":value==="medium"||value==="limited"||value==="planned"?"bg-amber-50 text-amber-700 border-amber-200":"bg-blue-50 text-blue-700 border-blue-200";return <Badge variant="outline" className={`${c} capitalize`}>{value}</Badge>}
 function TrainingProgress({training}:{training:Training}){return <div className="space-y-2"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{training.name}</p><p className="text-xs text-muted-foreground">{training.location}</p></div><strong className="text-sm">{training.progress}%</strong></div><Progress value={training.progress} className="h-2"/></div>}
 
-function Dashboard({data,setView}:{data:Workspace;setView:(v:View)=>void}){const activeTrainings=data.trainings.filter(t=>t.status==="active");const assigned=data.participants.filter(p=>p.user_id===data.userId).map(p=>p.training_id);const myTrainings=data.role==="volunteer"?data.trainings.filter(t=>assigned.includes(t.id)):data.role==="trainer"?data.trainings.filter(t=>t.trainer_id===data.userId):data.trainings;const visibleTrainings=data.role==="admin"?data.trainings:myTrainings;const totalAlloc=data.allocations.reduce((s,a)=>s+a.quantity,0);const title=data.role==="admin"?"Admin dashboard":data.role==="trainer"?"Trainer dashboard":"Volunteer dashboard";return <><PageHeading title={title} subtitle={data.role==="volunteer"?`Welcome back, ${data.profile.full_name}. Your current assignments are below.`:"Overview of disaster training, resources, volunteers and alerts."}/>
-<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{data.role==="admin"&&<StatCard label="Total users" value={data.profiles.length} icon={Users} note="Across all roles"/>}<StatCard label={data.role==="admin"?"Total trainings":"My trainings"} value={visibleTrainings.length} icon={GraduationCap} tone="blue"/><StatCard label={data.role==="volunteer"?"Assigned resources":"Resources allocated"} value={data.role==="volunteer"?data.allocations.length:totalAlloc} icon={Boxes} tone="green"/><StatCard label="Active alerts" value={data.alerts.filter(a=>a.status==="active").length} icon={AlertTriangle} tone="red"/>{data.role==="admin"&&<StatCard label="Active trainings" value={activeTrainings.length} icon={Activity} tone="green"/>}</div>
+function Dashboard({data,setView}:{data:Workspace;setView:(v:View)=>void}){const activeTrainings=data.trainings.filter(t=>t.status==="active");const assigned=data.participants.filter(p=>p.user_id===data.userId).map(p=>p.training_id);const myTrainings=data.role==="volunteer"?data.trainings.filter(t=>assigned.includes(t.id)):data.role==="trainer"?data.trainings.filter(t=>t.trainer_id===data.userId):data.trainings;const visibleTrainings=data.role==="admin"?data.trainings:myTrainings;const title=data.role==="admin"?"Admin dashboard":data.role==="trainer"?"Trainer dashboard":"Volunteer dashboard";return <><PageHeading title={title} subtitle={data.role==="volunteer"?`Welcome back, ${data.profile.full_name}. Your current assignments are below.`:"Live disaster response, readiness, and relief operations."}/>
+<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active disasters" value={data.disasters.filter(d=>!["Resolved","Closed"].includes(d.status)).length} icon={AlertTriangle} tone="red"/><StatCard label="Active alerts" value={data.alerts.filter(a=>a.status==="active").length} icon={Bell} tone="red"/><StatCard label="People affected" value={data.disasters.reduce((s,d)=>s+d.people_affected,0).toLocaleString()} icon={Users}/><StatCard label="People evacuated" value={data.disasters.reduce((s,d)=>s+d.evacuated,0).toLocaleString()} icon={RouteIcon} tone="green"/><StatCard label="Active trainings" value={activeTrainings.length} icon={GraduationCap}/><StatCard label="Available responders" value={data.teams.filter(t=>t.status==="Available").length} icon={ShieldCheck} tone="green"/><StatCard label="Available resources" value={data.resources.reduce((s,r)=>s+r.available_quantity,0)} icon={Boxes} tone="green"/><StatCard label="Open shelters" value={data.shelters.filter(s=>s.status==="Open"||s.status==="Emergency Only").length} icon={TentTree} tone="amber"/></div>
 <div className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_.75fr]"><Panel title={data.role==="volunteer"?"My assigned trainings":"Training progress"} action={<Button variant="ghost" size="sm" onClick={()=>setView("trainings")}>View all<ChevronRight/></Button>}><div className="space-y-5">{visibleTrainings.map(t=><TrainingProgress key={t.id} training={t}/>)}</div></Panel><Panel title="Active alerts" action={<Button variant="ghost" size="sm" onClick={()=>setView("alerts")}>View all<ChevronRight/></Button>}><div className="space-y-3">{data.alerts.filter(a=>a.status==="active").slice(0,3).map(a=><div key={a.id} className="flex gap-3 rounded-md border p-3"><SeverityIcon severity={a.severity}/><div><Status value={a.severity}/><p className="mt-2 text-sm font-semibold">{a.title}</p><p className="text-xs text-muted-foreground">{a.message}</p></div></div>)}</div></Panel></div>
 <Panel title="Recent activity" className="mt-6"><ActivityList items={data.activity}/></Panel></>}
 
