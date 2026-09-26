@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790406597447,
+      "tag": "0000_create_disaster_management_schema",
+      "breakpoints": true
+    }
+  ]
+}
