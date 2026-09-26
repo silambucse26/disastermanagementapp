@@ -22,6 +22,13 @@
       "when": 1790408369014,
       "tag": "0002_link_allocations_to_disasters",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790408548730,
+      "tag": "0003_create_alert_notifications",
+      "breakpoints": true
     }
   ]
 }
