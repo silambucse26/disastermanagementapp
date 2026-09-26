@@ -15,6 +15,13 @@
       "when": 1790408344501,
       "tag": "0001_extend_disaster_response_layer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790408369014,
+      "tag": "0002_link_allocations_to_disasters",
+      "breakpoints": true
     }
   ]
 }

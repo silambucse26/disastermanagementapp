@@ -177,6 +177,7 @@ export type Database = {
         Row: {
           allocated_by: string
           created_at: string
+          disaster_id: string | null
           id: string
           quantity: number
           resource_id: string
@@ -187,6 +188,7 @@ export type Database = {
         Insert: {
           allocated_by: string
           created_at?: string
+          disaster_id?: string | null
           id?: string
           quantity: number
           resource_id: string
@@ -197,6 +199,7 @@ export type Database = {
         Update: {
           allocated_by?: string
           created_at?: string
+          disaster_id?: string | null
           id?: string
           quantity?: number
           resource_id?: string
@@ -210,6 +213,13 @@ export type Database = {
             columns: ["allocated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "allocations_disaster_id_fkey"
+            columns: ["disaster_id"]
+            isOneToOne: false
+            referencedRelation: "disasters"
             referencedColumns: ["id"]
           },
           {
