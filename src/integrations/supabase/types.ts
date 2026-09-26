@@ -16,28 +16,40 @@ export type Database = {
     Tables: {
       activity_log: {
         Row: {
+          action: string | null
           actor_id: string | null
           created_at: string
+          description: string | null
           entity_id: string | null
           entity_type: string | null
           event: string
           id: string
+          module: string | null
+          status: string
         }
         Insert: {
+          action?: string | null
           actor_id?: string | null
           created_at?: string
+          description?: string | null
           entity_id?: string | null
           entity_type?: string | null
           event: string
           id?: string
+          module?: string | null
+          status?: string
         }
         Update: {
+          action?: string | null
           actor_id?: string | null
           created_at?: string
+          description?: string | null
           entity_id?: string | null
           entity_type?: string | null
           event?: string
           id?: string
+          module?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -49,40 +61,91 @@ export type Database = {
           },
         ]
       }
+      alert_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          alert_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          alert_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          alert_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_acknowledgements_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_acknowledgements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
           created_at: string
           created_by: string | null
+          disaster_id: string | null
+          expires_at: string | null
           id: string
+          location: string
           message: string
           recipients: string
           resolved_at: string | null
           severity: Database["public"]["Enums"]["alert_severity"]
           status: Database["public"]["Enums"]["alert_status"]
+          target_teams: string[]
           title: string
           training_id: string | null
         }
         Insert: {
+          alert_type?: Database["public"]["Enums"]["alert_type"]
           created_at?: string
           created_by?: string | null
+          disaster_id?: string | null
+          expires_at?: string | null
           id?: string
+          location?: string
           message: string
           recipients?: string
           resolved_at?: string | null
           severity: Database["public"]["Enums"]["alert_severity"]
           status?: Database["public"]["Enums"]["alert_status"]
+          target_teams?: string[]
           title: string
           training_id?: string | null
         }
         Update: {
+          alert_type?: Database["public"]["Enums"]["alert_type"]
           created_at?: string
           created_by?: string | null
+          disaster_id?: string | null
+          expires_at?: string | null
           id?: string
+          location?: string
           message?: string
           recipients?: string
           resolved_at?: string | null
           severity?: Database["public"]["Enums"]["alert_severity"]
           status?: Database["public"]["Enums"]["alert_status"]
+          target_teams?: string[]
           title?: string
           training_id?: string | null
         }
@@ -92,6 +155,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_disaster_id_fkey"
+            columns: ["disaster_id"]
+            isOneToOne: false
+            referencedRelation: "disasters"
             referencedColumns: ["id"]
           },
           {
@@ -165,6 +235,252 @@ export type Database = {
           },
         ]
       }
+      attendance_records: {
+        Row: {
+          attendance_date: string
+          created_at: string
+          id: string
+          participant_id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          training_id: string
+          updated_at: string
+        }
+        Insert: {
+          attendance_date?: string
+          created_at?: string
+          id?: string
+          participant_id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          training_id: string
+          updated_at?: string
+        }
+        Update: {
+          attendance_date?: string
+          created_at?: string
+          id?: string
+          participant_id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          training_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "training_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disasters: {
+        Row: {
+          address: string
+          area: string
+          city: string
+          created_at: string
+          deaths: number
+          description: string
+          disaster_code: string
+          disaster_type: Database["public"]["Enums"]["disaster_type"]
+          district: string
+          estimated_damage: number
+          evacuated: number
+          id: string
+          injured: number
+          latitude: number
+          longitude: number
+          missing: number
+          occurred_at: string
+          people_affected: number
+          reported_by: string | null
+          response_status: string
+          severity: Database["public"]["Enums"]["disaster_severity"]
+          state: string
+          status: Database["public"]["Enums"]["disaster_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          area?: string
+          city: string
+          created_at?: string
+          deaths?: number
+          description?: string
+          disaster_code?: string
+          disaster_type: Database["public"]["Enums"]["disaster_type"]
+          district: string
+          estimated_damage?: number
+          evacuated?: number
+          id?: string
+          injured?: number
+          latitude: number
+          longitude: number
+          missing?: number
+          occurred_at: string
+          people_affected?: number
+          reported_by?: string | null
+          response_status?: string
+          severity: Database["public"]["Enums"]["disaster_severity"]
+          state: string
+          status?: Database["public"]["Enums"]["disaster_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          area?: string
+          city?: string
+          created_at?: string
+          deaths?: number
+          description?: string
+          disaster_code?: string
+          disaster_type?: Database["public"]["Enums"]["disaster_type"]
+          district?: string
+          estimated_damage?: number
+          evacuated?: number
+          id?: string
+          injured?: number
+          latitude?: number
+          longitude?: number
+          missing?: number
+          occurred_at?: string
+          people_affected?: number
+          reported_by?: string | null
+          response_status?: string
+          severity?: Database["public"]["Enums"]["disaster_severity"]
+          state?: string
+          status?: Database["public"]["Enums"]["disaster_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disasters_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_contacts: {
+        Row: {
+          availability: string
+          contact_number: string
+          created_at: string
+          description: string
+          id: string
+          location: string
+          organization: string
+          service: string
+          updated_at: string
+        }
+        Insert: {
+          availability?: string
+          contact_number: string
+          created_at?: string
+          description?: string
+          id?: string
+          location: string
+          organization: string
+          service: string
+          updated_at?: string
+        }
+        Update: {
+          availability?: string
+          contact_number?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string
+          organization?: string
+          service?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      evacuations: {
+        Row: {
+          created_at: string
+          destination_shelter_id: string | null
+          disaster_id: string
+          end_time: string | null
+          evacuation_code: string
+          evacuation_zone: string
+          id: string
+          people_evacuated: number
+          people_to_evacuate: number
+          remaining: number | null
+          responsible_team_id: string | null
+          start_time: string | null
+          status: Database["public"]["Enums"]["evacuation_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination_shelter_id?: string | null
+          disaster_id: string
+          end_time?: string | null
+          evacuation_code?: string
+          evacuation_zone: string
+          id?: string
+          people_evacuated?: number
+          people_to_evacuate: number
+          remaining?: number | null
+          responsible_team_id?: string | null
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["evacuation_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination_shelter_id?: string | null
+          disaster_id?: string
+          end_time?: string | null
+          evacuation_code?: string
+          evacuation_zone?: string
+          id?: string
+          people_evacuated?: number
+          people_to_evacuate?: number
+          remaining?: number | null
+          responsible_team_id?: string | null
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["evacuation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evacuations_destination_shelter_id_fkey"
+            columns: ["destination_shelter_id"]
+            isOneToOne: false
+            referencedRelation: "shelters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evacuations_disaster_id_fkey"
+            columns: ["disaster_id"]
+            isOneToOne: false
+            referencedRelation: "disasters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evacuations_responsible_team_id_fkey"
+            columns: ["responsible_team_id"]
+            isOneToOne: false
+            referencedRelation: "response_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           comments: string
@@ -207,6 +523,163 @@ export type Database = {
           },
         ]
       }
+      hospital_disaster_responses: {
+        Row: {
+          created_at: string
+          disaster_id: string
+          hospital_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          disaster_id: string
+          hospital_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          disaster_id?: string
+          hospital_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_disaster_responses_disaster_id_fkey"
+            columns: ["disaster_id"]
+            isOneToOne: false
+            referencedRelation: "disasters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_disaster_responses_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "medical_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_facilities: {
+        Row: {
+          address: string
+          ambulance_count: number
+          available_beds: number
+          available_icu_beds: number
+          contact: string
+          created_at: string
+          emergency_capacity: number
+          hospital_code: string
+          hospital_name: string
+          icu_beds: number
+          id: string
+          latitude: number | null
+          location: string
+          longitude: number | null
+          status: string
+          total_beds: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          ambulance_count?: number
+          available_beds?: number
+          available_icu_beds?: number
+          contact: string
+          created_at?: string
+          emergency_capacity?: number
+          hospital_code?: string
+          hospital_name: string
+          icu_beds?: number
+          id?: string
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          status?: string
+          total_beds?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          ambulance_count?: number
+          available_beds?: number
+          available_icu_beds?: number
+          contact?: string
+          created_at?: string
+          emergency_capacity?: number
+          hospital_code?: string
+          hospital_name?: string
+          icu_beds?: number
+          id?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          status?: string
+          total_beds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          notification_type: string
+          read: boolean
+          related_alert_id: string | null
+          related_disaster_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          notification_type: string
+          read?: boolean
+          related_alert_id?: string | null
+          related_disaster_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          notification_type?: string
+          read?: boolean
+          related_alert_id?: string | null
+          related_disaster_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_alert_id_fkey"
+            columns: ["related_alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_disaster_id_fkey"
+            columns: ["related_disaster_id"]
+            isOneToOne: false
+            referencedRelation: "disasters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -242,33 +715,233 @@ export type Database = {
           allocated_quantity: number
           available_quantity: number
           category: string
+          condition: string
           created_at: string
+          damaged_quantity: number
+          expiry_date: string | null
           id: string
           minimum_stock: number
           name: string
+          status: string
+          storage_location: string
+          supplier: string
           total_quantity: number
+          unit: string
           updated_at: string
+          warehouse_id: string | null
         }
         Insert: {
           allocated_quantity?: number
           available_quantity: number
           category: string
+          condition?: string
           created_at?: string
+          damaged_quantity?: number
+          expiry_date?: string | null
           id?: string
           minimum_stock?: number
           name: string
+          status?: string
+          storage_location?: string
+          supplier?: string
           total_quantity: number
+          unit?: string
           updated_at?: string
+          warehouse_id?: string | null
         }
         Update: {
           allocated_quantity?: number
           available_quantity?: number
           category?: string
+          condition?: string
           created_at?: string
+          damaged_quantity?: number
+          expiry_date?: string | null
           id?: string
           minimum_stock?: number
           name?: string
+          status?: string
+          storage_location?: string
+          supplier?: string
           total_quantity?: number
+          unit?: string
+          updated_at?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      response_team_members: {
+        Row: {
+          created_at: string
+          id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "response_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      response_teams: {
+        Row: {
+          assigned_disaster_id: string | null
+          availability: boolean
+          created_at: string
+          current_location: string
+          id: string
+          latitude: number | null
+          leader_id: string | null
+          longitude: number | null
+          phone: string
+          status: Database["public"]["Enums"]["team_status"]
+          team_code: string
+          team_name: string
+          team_type: Database["public"]["Enums"]["team_type"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_disaster_id?: string | null
+          availability?: boolean
+          created_at?: string
+          current_location: string
+          id?: string
+          latitude?: number | null
+          leader_id?: string | null
+          longitude?: number | null
+          phone: string
+          status?: Database["public"]["Enums"]["team_status"]
+          team_code?: string
+          team_name: string
+          team_type: Database["public"]["Enums"]["team_type"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_disaster_id?: string | null
+          availability?: boolean
+          created_at?: string
+          current_location?: string
+          id?: string
+          latitude?: number | null
+          leader_id?: string | null
+          longitude?: number | null
+          phone?: string
+          status?: Database["public"]["Enums"]["team_status"]
+          team_code?: string
+          team_name?: string
+          team_type?: Database["public"]["Enums"]["team_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_teams_assigned_disaster_id_fkey"
+            columns: ["assigned_disaster_id"]
+            isOneToOne: false
+            referencedRelation: "disasters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_teams_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shelters: {
+        Row: {
+          address: string
+          available_capacity: number | null
+          capacity: number
+          city: string
+          contact_number: string
+          contact_person: string
+          created_at: string
+          current_occupancy: number
+          district: string
+          facilities: string[]
+          id: string
+          latitude: number
+          longitude: number
+          shelter_code: string
+          shelter_name: string
+          shelter_type: string
+          state: string
+          status: Database["public"]["Enums"]["shelter_status"]
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          available_capacity?: number | null
+          capacity: number
+          city: string
+          contact_number: string
+          contact_person: string
+          created_at?: string
+          current_occupancy?: number
+          district: string
+          facilities?: string[]
+          id?: string
+          latitude: number
+          longitude: number
+          shelter_code?: string
+          shelter_name: string
+          shelter_type: string
+          state: string
+          status?: Database["public"]["Enums"]["shelter_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          available_capacity?: number | null
+          capacity?: number
+          city?: string
+          contact_number?: string
+          contact_person?: string
+          created_at?: string
+          current_occupancy?: number
+          district?: string
+          facilities?: string[]
+          id?: string
+          latitude?: number
+          longitude?: number
+          shelter_code?: string
+          shelter_name?: string
+          shelter_type?: string
+          state?: string
+          status?: Database["public"]["Enums"]["shelter_status"]
           updated_at?: string
         }
         Relationships: []
@@ -311,24 +984,42 @@ export type Database = {
       training_participants: {
         Row: {
           attendance: boolean
+          certificate: string | null
           created_at: string
           id: string
+          participant_code: string | null
+          participant_name: string | null
+          participant_role: string | null
+          phone: string | null
+          registration_date: string
           status: string
           training_id: string
           user_id: string
         }
         Insert: {
           attendance?: boolean
+          certificate?: string | null
           created_at?: string
           id?: string
+          participant_code?: string | null
+          participant_name?: string | null
+          participant_role?: string | null
+          phone?: string | null
+          registration_date?: string
           status?: string
           training_id: string
           user_id: string
         }
         Update: {
           attendance?: boolean
+          certificate?: string | null
           created_at?: string
           id?: string
+          participant_code?: string | null
+          participant_name?: string | null
+          participant_role?: string | null
+          phone?: string | null
+          registration_date?: string
           status?: string
           training_id?: string
           user_id?: string
@@ -352,46 +1043,55 @@ export type Database = {
       }
       trainings: {
         Row: {
+          attendance_rate: number
           created_at: string
           created_by: string | null
           description: string
           disaster_type: string
+          end_time: string | null
           id: string
           location: string
           name: string
           participant_count: number
           progress: number
           scheduled_at: string
+          start_time: string | null
           status: Database["public"]["Enums"]["training_status"]
           trainer_id: string | null
           updated_at: string
         }
         Insert: {
+          attendance_rate?: number
           created_at?: string
           created_by?: string | null
           description?: string
           disaster_type: string
+          end_time?: string | null
           id?: string
           location: string
           name: string
           participant_count?: number
           progress?: number
           scheduled_at: string
+          start_time?: string | null
           status?: Database["public"]["Enums"]["training_status"]
           trainer_id?: string | null
           updated_at?: string
         }
         Update: {
+          attendance_rate?: number
           created_at?: string
           created_by?: string | null
           description?: string
           disaster_type?: string
+          end_time?: string | null
           id?: string
           location?: string
           name?: string
           participant_count?: number
           progress?: number
           scheduled_at?: string
+          start_time?: string | null
           status?: Database["public"]["Enums"]["training_status"]
           trainer_id?: string | null
           updated_at?: string
@@ -434,11 +1134,77 @@ export type Database = {
         }
         Relationships: []
       }
+      warehouses: {
+        Row: {
+          address: string
+          capacity: number
+          contact: string
+          created_at: string
+          current_utilization: number
+          id: string
+          latitude: number | null
+          location: string
+          longitude: number | null
+          manager: string
+          status: Database["public"]["Enums"]["record_status"]
+          updated_at: string
+          warehouse_code: string
+          warehouse_name: string
+        }
+        Insert: {
+          address: string
+          capacity: number
+          contact: string
+          created_at?: string
+          current_utilization?: number
+          id?: string
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          manager: string
+          status?: Database["public"]["Enums"]["record_status"]
+          updated_at?: string
+          warehouse_code?: string
+          warehouse_name: string
+        }
+        Update: {
+          address?: string
+          capacity?: number
+          contact?: string
+          created_at?: string
+          current_utilization?: number
+          id?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          manager?: string
+          status?: Database["public"]["Enums"]["record_status"]
+          updated_at?: string
+          warehouse_code?: string
+          warehouse_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      acknowledge_alert: {
+        Args: { _alert_id: string }
+        Returns: {
+          acknowledged_at: string
+          alert_id: string
+          id: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "alert_acknowledgements"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       allocate_resource: {
         Args: {
           _quantity: number
@@ -463,9 +1229,55 @@ export type Database = {
     Enums: {
       alert_severity: "high" | "medium" | "info"
       alert_status: "active" | "resolved"
+      alert_type:
+        | "Disaster Warning"
+        | "Resource Shortage"
+        | "Evacuation"
+        | "Medical Emergency"
+        | "Weather"
+        | "Training"
+        | "Infrastructure"
+        | "Security"
+        | "Other"
       allocation_status: "allocated" | "returned"
       app_role: "admin" | "trainer" | "volunteer"
+      attendance_status: "Present" | "Absent" | "Late"
+      disaster_severity: "Low" | "Medium" | "High" | "Critical"
+      disaster_status:
+        | "Reported"
+        | "Active"
+        | "Under Response"
+        | "Contained"
+        | "Resolved"
+        | "Closed"
+      disaster_type:
+        | "Flood"
+        | "Fire"
+        | "Earthquake"
+        | "Cyclone"
+        | "Landslide"
+        | "Tsunami"
+        | "Drought"
+        | "Industrial Accident"
+        | "Building Collapse"
+        | "Other"
+      evacuation_status: "Planned" | "In Progress" | "Completed" | "Cancelled"
       record_status: "active" | "inactive"
+      shelter_status: "Open" | "Full" | "Closed" | "Emergency Only"
+      team_status:
+        | "Available"
+        | "Assigned"
+        | "Deployed"
+        | "Unavailable"
+        | "Completed"
+      team_type:
+        | "Search & Rescue"
+        | "Medical"
+        | "Fire & Rescue"
+        | "Police"
+        | "Volunteer"
+        | "Logistics"
+        | "Emergency Response"
       training_status: "planned" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -596,9 +1408,60 @@ export const Constants = {
     Enums: {
       alert_severity: ["high", "medium", "info"],
       alert_status: ["active", "resolved"],
+      alert_type: [
+        "Disaster Warning",
+        "Resource Shortage",
+        "Evacuation",
+        "Medical Emergency",
+        "Weather",
+        "Training",
+        "Infrastructure",
+        "Security",
+        "Other",
+      ],
       allocation_status: ["allocated", "returned"],
       app_role: ["admin", "trainer", "volunteer"],
+      attendance_status: ["Present", "Absent", "Late"],
+      disaster_severity: ["Low", "Medium", "High", "Critical"],
+      disaster_status: [
+        "Reported",
+        "Active",
+        "Under Response",
+        "Contained",
+        "Resolved",
+        "Closed",
+      ],
+      disaster_type: [
+        "Flood",
+        "Fire",
+        "Earthquake",
+        "Cyclone",
+        "Landslide",
+        "Tsunami",
+        "Drought",
+        "Industrial Accident",
+        "Building Collapse",
+        "Other",
+      ],
+      evacuation_status: ["Planned", "In Progress", "Completed", "Cancelled"],
       record_status: ["active", "inactive"],
+      shelter_status: ["Open", "Full", "Closed", "Emergency Only"],
+      team_status: [
+        "Available",
+        "Assigned",
+        "Deployed",
+        "Unavailable",
+        "Completed",
+      ],
+      team_type: [
+        "Search & Rescue",
+        "Medical",
+        "Fire & Rescue",
+        "Police",
+        "Volunteer",
+        "Logistics",
+        "Emergency Response",
+      ],
       training_status: ["planned", "active", "completed", "cancelled"],
     },
   },

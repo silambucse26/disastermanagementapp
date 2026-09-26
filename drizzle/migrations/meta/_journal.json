@@ -8,6 +8,13 @@
       "when": 1790406597447,
       "tag": "0000_create_disaster_management_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790408344501,
+      "tag": "0001_extend_disaster_response_layer",
+      "breakpoints": true
     }
   ]
 }
