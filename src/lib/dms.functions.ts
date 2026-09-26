@@ -30,7 +30,9 @@ export const getWorkspace = createServerFn({ method: "GET" }).middleware([requir
   ]);
   const failed = [profile, profiles, roles, trainings, resources, allocations, alerts, feedback, activity, participants, activities].find((r) => r.error);
   if (failed?.error) throw failed.error;
-  return { userId: context.userId, role, profile: profile.data, profiles: profiles.data ?? [], roles: roles.data ?? [], trainings: trainings.data ?? [], resources: resources.data ?? [], allocations: allocations.data ?? [], alerts: alerts.data ?? [], feedback: feedback.data ?? [], activity: activity.data ?? [], participants: participants.data ?? [], activities: activities.data ?? [] };
+  const profileData = profile.data;
+  if (!profileData) throw new Error("Account profile is not configured.");
+  return { userId: context.userId, role, profile: profileData, profiles: profiles.data ?? [], roles: roles.data ?? [], trainings: trainings.data ?? [], resources: resources.data ?? [], allocations: allocations.data ?? [], alerts: alerts.data ?? [], feedback: feedback.data ?? [], activity: activity.data ?? [], participants: participants.data ?? [], activities: activities.data ?? [] };
 });
 
 export const createTraining = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ name:z.string().min(3), disasterType:z.string().min(2), location:z.string().min(2), scheduledAt:z.string().min(1), trainerId:z.string().uuid().nullable(), participants:z.number().int().min(0), status:statusSchema, description:z.string() }).parse(input)).handler(async ({ data, context }) => {
