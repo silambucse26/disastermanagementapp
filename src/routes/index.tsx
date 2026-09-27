@@ -257,26 +257,36 @@ function LoginPage() {
   }
 
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-slate-950 px-4 py-10">
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/50 to-blue-50/30 px-4 py-10">
+      {/* Background Decorative Grid */}
       <div
-        className="absolute inset-0 opacity-15"
+        className="absolute inset-0 opacity-40 pointer-events-none"
         style={{
           backgroundImage:
-            "linear-gradient(#475569 1px, transparent 1px), linear-gradient(90deg, #475569 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
+            "linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
         }}
       />
 
       <div className="relative w-full max-w-md">
-        <div className="mb-6 text-center text-white">
-          <div className="mx-auto mb-3 grid size-14 place-items-center rounded-2xl bg-red-600 shadow-xl">
-            <AlertTriangle className="size-7 text-white" />
+        {/* Header Branding */}
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-2xl bg-white p-2 shadow-lg ring-1 ring-slate-200/80">
+            <img src="/favicon.svg" alt="DMS Logo" className="size-12 drop-shadow-sm" />
           </div>
-          <h1 className="text-2xl font-black tracking-wide text-white sm:text-3xl">DISASTER MANAGEMENT SYSTEM</h1>
-          <p className="mt-1.5 text-xs text-slate-400">Integrated Command, Real-Time Training & Logistics</p>
+          <span className="inline-block rounded-full bg-blue-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-800">
+            State Command & Operations
+          </span>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            DISASTER MANAGEMENT SYSTEM
+          </h1>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Integrated Command, Real-Time Training & Logistics
+          </p>
         </div>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur sm:p-8">
+        {/* Auth Form Card */}
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xl sm:p-8">
           <Tabs
             value={tab}
             onValueChange={(v) => {
@@ -290,9 +300,13 @@ function LoginPage() {
             }}
             className="mb-5"
           >
-            <TabsList className="grid w-full grid-cols-2 bg-slate-800">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Register / Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1">
+              <TabsTrigger value="signin" className="font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
+                Register / Sign Up
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -306,35 +320,41 @@ function LoginPage() {
           >
             {tab === "signup" && (
               <div className="space-y-1.5">
-                <Label htmlFor="fullname" className="text-slate-200">Full Name</Label>
+                <Label htmlFor="fullname" className="text-xs font-bold text-slate-700">
+                  Full Name
+                </Label>
                 <Input
                   id="fullname"
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="border-slate-700 bg-slate-800 text-white"
+                  className="border-slate-200 bg-slate-50 text-slate-900 focus:bg-white"
                   required
                 />
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-slate-200">Email Address</Label>
+              <Label htmlFor="email" className="text-xs font-bold text-slate-700">
+                Email Address
+              </Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="responder@disaster.gov.in"
+                placeholder="responder@dms.gov.in"
                 autoComplete="email"
-                className="border-slate-700 bg-slate-800 text-white"
+                className="border-slate-200 bg-slate-50 text-slate-900 focus:bg-white"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-slate-200">Password</Label>
+              <Label htmlFor="password" className="text-xs font-bold text-slate-700">
+                Password
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -342,7 +362,7 @@ function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="border-slate-700 bg-slate-800 pr-10 text-white"
+                  className="border-slate-200 bg-slate-50 pr-10 text-slate-900 focus:bg-white"
                   required
                 />
                 <Button
@@ -350,7 +370,7 @@ function LoginPage() {
                   variant="ghost"
                   size="icon"
                   aria-label={show ? "Hide password" : "Show password"}
-                  className="absolute right-0 top-0 text-slate-400 hover:text-white"
+                  className="absolute right-0 top-0 text-slate-400 hover:text-slate-700"
                   onClick={() => setShow(!show)}
                 >
                   {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -359,12 +379,12 @@ function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-slate-200">Operational Role</Label>
+              <Label className="text-xs font-bold text-slate-700">Operational Role</Label>
               <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                <SelectTrigger className="border-slate-200 bg-slate-50 text-slate-900 focus:bg-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900 text-white">
+                <SelectContent className="border-slate-200 bg-white text-slate-900">
                   {tab === "signin" && (
                     <SelectItem value="admin">Administrator (Command Center)</SelectItem>
                   )}
@@ -373,25 +393,25 @@ function LoginPage() {
                 </SelectContent>
               </Select>
               {tab === "signup" && (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500">
                   * Administrator access is restricted and granted only by the Command Center.
                 </p>
               )}
             </div>
 
             {error && (
-              <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
                 {error}
               </div>
             )}
 
             {success && (
-              <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+              <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700">
                 {success}
               </div>
             )}
 
-            <Button className="h-11 w-full bg-red-600 hover:bg-red-700 text-white font-bold" disabled={loading}>
+            <Button className="h-11 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md" disabled={loading}>
               {loading ? (
                 <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               ) : tab === "signin" ? (
@@ -403,10 +423,11 @@ function LoginPage() {
             </Button>
           </form>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-slate-500">
-            <span className="h-px flex-1 bg-slate-800" />
-            ONE-CLICK ROLE DEMO ACCESS
-            <span className="h-px flex-1 bg-slate-800" />
+          {/* Quick Demo Access Bar */}
+          <div className="my-5 flex items-center gap-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className="h-px flex-1 bg-slate-200" />
+            1-CLICK DEMO ACCESS
+            <span className="h-px flex-1 bg-slate-200" />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -414,7 +435,7 @@ function LoginPage() {
               <Button
                 key={d.role}
                 variant="outline"
-                className="h-auto flex-col border-slate-800 bg-slate-800/60 py-2.5 text-slate-200 hover:bg-slate-700 hover:text-white capitalize"
+                className="h-auto flex-col border-slate-200 bg-slate-50/80 py-2.5 text-slate-700 hover:border-blue-300 hover:bg-blue-50/60 hover:text-blue-900 capitalize"
                 onClick={() => {
                   setTab("signin");
                   setRole(d.role);
@@ -424,16 +445,21 @@ function LoginPage() {
                 }}
               >
                 <span className="font-bold text-xs">{d.role}</span>
-                <span className="text-[10px] font-normal text-slate-400">Auto-login</span>
+                <span className="text-[10px] font-medium text-slate-400">Auto-login</span>
               </Button>
             ))}
           </div>
 
-          <p className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
-            <ShieldCheck className="size-4 text-emerald-500" />
+          <p className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="size-4 text-emerald-600" />
             256-bit Encrypted Operations Network
           </p>
         </section>
+
+        {/* Footer info */}
+        <p className="mt-6 text-center text-[11px] text-slate-500">
+          Disaster Management System &copy; 2026. Secure operational gateway.
+        </p>
       </div>
     </main>
   );
