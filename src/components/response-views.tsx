@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { acknowledgeAlert, deleteDisaster, markNotificationRead, recordAttendance, saveDisaster, saveEmergencyContact, saveEvacuation, saveMedicalFacility, saveResponseTeam, saveShelter, saveWarehouse } from "@/lib/response.functions";
 import { formatDate, formatTime, type Disaster } from "@/lib/dms";
 import type { getWorkspace } from "@/lib/dms.functions";
+import { IncidentMapLeaflet } from "./incident-map-leaflet";
 
 export type ResponseWorkspace=Awaited<ReturnType<typeof getWorkspace>>;
 export type ResponseView="disasters"|"incident-map"|"teams"|"shelters"|"evacuations"|"warehouses"|"participants"|"attendance"|"notifications"|"hospitals"|"contacts"|"audit";
@@ -31,7 +32,7 @@ const num=(v:string)=>Number(v)||0;
 
 export function ResponseModule({view,data,refresh}:{view:ResponseView;data:ResponseWorkspace;refresh:()=>Promise<unknown>}){
  if(view==="disasters")return <Disasters data={data} refresh={refresh}/>;
- if(view==="incident-map")return <IncidentMap data={data}/>;
+ if(view==="incident-map")return <IncidentMapLeaflet data={data}/>;
  if(view==="teams")return <Teams data={data} refresh={refresh}/>;
  if(view==="shelters")return <Shelters data={data} refresh={refresh}/>;
  if(view==="evacuations")return <Evacuations data={data} refresh={refresh}/>;

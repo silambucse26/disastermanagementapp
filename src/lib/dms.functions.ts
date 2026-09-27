@@ -105,6 +105,47 @@ export const submitFeedback = createServerFn({ method: "POST" }).middleware([req
   return result.data;
 });
 
+export const updateTraining = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ id:z.string().uuid(), name:z.string().min(3), disasterType:z.string().min(2), location:z.string().min(2), scheduledAt:z.string().min(1), trainerId:z.string().uuid().nullable(), participants:z.number().int().min(0), status:statusSchema, description:z.string() }).parse(input)).handler(async ({ data, context }) => {
+  requireRole(await roleFor(context), ["admin","trainer"]);
+  const result = await context.supabase.from("trainings").update({ name:data.name, disaster_type:data.disasterType, location:data.location, scheduled_at:data.scheduledAt, trainer_id:data.trainerId, participant_count:data.participants, status:data.status, description:data.description, updated_at:new Date().toISOString() }).eq("id", data.id).select().single();
+  if (result.error) throw result.error;
+  await context.supabase.from("activity_log").insert({ actor_id:context.userId, event:`Updated training: ${data.name}`, entity_type:"training", entity_id:data.id });
+  return result.data;
+});
+
+export const joinTraining = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ trainingId:z.string().uuid() }).parse(input)).handler(async ({ data, context }) => {
+  const existing = await context.supabase.from("training_participants").select("id").eq("training_id", data.trainingId).eq("user_id", context.userId).maybeSingle();
+  if (existing.data) throw new Error("You are already enrolled in this training program.");
+
+  const { data: userProfile } = await context.supabase.from("profiles").select("full_name").eq("id", context.userId).single();
+  const participantCode = `VOL-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const result = await context.supabase.from("training_participants").insert({
+    training_id: data.trainingId,
+    user_id: context.userId,
+    participant_name: userProfile?.full_name ?? "Volunteer Participant",
+    participant_code: participantCode,
+    participant_role: "Volunteer",
+    status: "Enrolled",
+    attendance: false
+  }).select().single();
+  if (result.error) throw result.error;
+
+  const { data: tr } = await context.supabase.from("trainings").select("participant_count, name").eq("id", data.trainingId).single();
+  if (tr) {
+    await context.supabase.from("trainings").update({ participant_count: (tr.participant_count || 0) + 1 }).eq("id", data.trainingId);
+  }
+
+  await context.supabase.from("activity_log").insert({
+    actor_id: context.userId,
+    event: `Enrolled in ${tr?.name ?? "training"}`,
+    entity_type: "training",
+    entity_id: data.trainingId
+  });
+
+  return result.data;
+});
+
 export const createUser = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => z.object({ fullName:z.string().min(2), email:z.string().email(), password:z.string().min(8), role:roleSchema }).parse(input)).handler(async ({ data, context }) => {
   requireRole(await roleFor(context), ["admin"]);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

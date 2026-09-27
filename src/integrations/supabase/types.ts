@@ -1235,6 +1235,30 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_training: {
+        Args: {
+          _training_id: string
+        }
+        Returns: {
+          ok: boolean
+          participant_id: string
+        }
+      }
+      register_responder: {
+        Args: {
+          _email: string
+          _full_name: string
+          _password: string
+          _role?: string
+        }
+        Returns: {
+          ok: boolean
+          message?: string
+          user_id?: string
+          email?: string
+          role?: string
+        }
+      }
     }
     Enums: {
       alert_severity: "high" | "medium" | "info"
